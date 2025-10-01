@@ -30,7 +30,7 @@ jobs:
       - name: Checkout Template Repo (for actions)
         uses: actions/checkout@v4
         with:
-          repository: Himaan1502/databricks-ci-cd-templates
+          repository: Himaan1502/ADB-Template
           path: template-repo
           ref: main
           
