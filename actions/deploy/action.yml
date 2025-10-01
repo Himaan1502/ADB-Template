@@ -1,0 +1,62 @@
+name: "Deploy Databricks Bundle"
+description: "Deploy a Databricks Asset Bundle to the target environment"
+inputs:
+  target:
+    description: "Deployment target (dev/uat/prod)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Databricks CLI and dependencies
+      shell: bash
+      run: |
+        echo "Installing Databricks CLI..."
+        curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+        pip install --upgrade pip wheel uv
+        databricks --version
+        
+    - name: Load Environment Config
+      shell: bash
+      run: |
+        # Use the working repo path (default to current directory if not set)
+        REPO_PATH=${WORKING_REPO_PATH:-"."}
+        
+        echo "Loading environment variables for ${{ inputs.target }}..."
+        if [ ! -f "$REPO_PATH/env/${{ inputs.target }}.txt" ]; then
+          echo "Environment file $REPO_PATH/env/${{ inputs.target }}.txt not found!"
+          echo "Available files in $REPO_PATH/env/:"
+          ls -la "$REPO_PATH/env/" || echo "env directory not found"
+          exit 1
+        fi
+        
+        # Load all variables from the env file
+        while IFS='=' read -r key value || [ -n "$key" ]; do
+          # Skip empty lines and comments
+          [[ $key =~ ^[[:space:]]*# ]] && continue
+          [[ -z "$key" ]] && continue
+          
+          # Remove any trailing whitespace and export to GitHub environment
+          key=$(echo "$key" | xargs)
+          value=$(echo "$value" | xargs)
+          echo "${key}=${value}" >> $GITHUB_ENV
+        done < "$REPO_PATH/env/${{ inputs.target }}.txt"
+        
+        echo "Successfully loaded environment variables from $REPO_PATH/env/${{ inputs.target }}.txt"
+        
+    - name: Deploy Databricks Bundle
+      shell: bash
+      run: |
+        # Use the working repo path
+        REPO_PATH=${WORKING_REPO_PATH:-"."}
+        
+        echo "Deploying Databricks Bundle to $TARGET..."
+        if [ ! -d "$REPO_PATH/DBX_Template" ]; then
+          echo "DBX_Template directory not found at $REPO_PATH/DBX_Template!"
+          echo "Available directories in $REPO_PATH:"
+          ls -la "$REPO_PATH" || echo "Working repo path not found"
+          exit 1
+        fi
+        
+        cd "$REPO_PATH/DBX_Template"
+        databricks bundle deploy --target "$TARGET"
