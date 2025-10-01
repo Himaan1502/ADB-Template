@@ -58,5 +58,4 @@ runs:
           exit 1
         fi
         
-        cd "$REPO_PATH/DBX_Template"
         databricks bundle deploy --target "$TARGET"
