@@ -74,13 +74,13 @@ jobs:
         continue-on-error: true
         
       - name: Check linting results
-        if: steps.black-check.outcome == 'failure' || steps.flake8-check.outcome == 'failure'
+        if: ${{ steps.black-check.outcome == 'failure' || steps.flake8-check.outcome == 'failure' }}
         run: |
           echo "❌ Linting checks failed!"
-          if [[ "${{ steps.black-check.outcome }}" == "failure" ]]; then
+          if [ "${{ steps.black-check.outcome }}" == "failure" ]; then
             echo "  - Black formatting issues detected"
           fi
-          if [[ "${{ steps.flake8-check.outcome }}" == "failure" ]]; then
+          if [ "${{ steps.flake8-check.outcome }}" == "failure" ]; then
             echo "  - Flake8 linting issues detected"
           fi
           exit 1
