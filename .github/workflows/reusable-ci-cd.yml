@@ -34,13 +34,13 @@ jobs:
           path: template-repo
           ref: main
           
-      # - name: Azure OIDC Login
-      #   uses: ./template-repo/actions/login
-      #   with:
-      #     environment: ${{ inputs.environment }}
-      #     client-id: ${{ secrets.client-id }}
-      #     tenant-id: ${{ secrets.tenant-id }}
-      #     subscription-id: ${{ secrets.subscription-id }}
+      - name: Azure OIDC Login
+        uses: ./template-repo/actions/login
+        with:
+          environment: ${{ inputs.environment }}
+          client-id: ${{ secrets.client-id }}
+          tenant-id: ${{ secrets.tenant-id }}
+          subscription-id: ${{ secrets.subscription-id }}
           
       - name: Deploy Bundle
         uses: ./template-repo/actions/deploy
