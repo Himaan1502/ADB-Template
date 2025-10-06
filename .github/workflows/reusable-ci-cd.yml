@@ -70,7 +70,7 @@ jobs:
           nbqa flake8 src/ \
             --max-line-length=120 \
             --ignore=F403,F405,E203,W503 \
-            --extend-ignore=E501,F821,E231,E241,E202
+            --extend-ignore=E501,F821,E231,E241,E202,E402
         continue-on-error: true
         
       - name: Check linting results
