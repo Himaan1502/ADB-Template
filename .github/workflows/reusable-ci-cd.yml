@@ -55,7 +55,7 @@ jobs:
         working-directory: ./working-repo
         run: |
           echo "Running Black formatting check..."
-          nbqa black src/udp_etl_framework/raw_to_silver/ \
+          nbqa black src/ \
             --line-length=120 \
             --target-version=py310 \
             --check \
@@ -67,7 +67,7 @@ jobs:
         working-directory: ./working-repo
         run: |
           echo "Running Flake8 linting..."
-          nbqa flake8 src/udp_etl_framework/raw_to_silver/ \
+          nbqa flake8 src/ \
             --max-line-length=120 \
             --ignore=F403,F405,E203,W503 \
             --extend-ignore=E501,F821,E231,E241,E202
