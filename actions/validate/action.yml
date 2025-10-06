@@ -46,7 +46,11 @@ runs:
     - name: Validate Databricks Bundle
       shell: bash
       run: |
+        # Use the working repo path
+        REPO_PATH=${WORKING_REPO_PATH:-"."}
+        
         echo "Validating Databricks Bundle for $TARGET..."
+        cd "$REPO_PATH"
         
         # Run validation
         databricks bundle validate --target "$TARGET"
