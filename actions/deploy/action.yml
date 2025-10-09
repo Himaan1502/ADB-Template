@@ -9,12 +9,17 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Databricks CLI
+    - name: Install Databricks CLI and Dependencies
       shell: bash
       run: |
         echo "Installing Databricks CLI..."
         curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
         databricks --version
+        
+        echo "Installing uv package manager..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        export PATH="$HOME/.cargo/bin:$PATH"
+        uv --version || echo "⚠️ uv installation may require shell restart"
         
     - name: Load Environment Config
       shell: bash
@@ -62,6 +67,9 @@ runs:
       run: |
         REPO_PATH=${WORKING_REPO_PATH:-"."}
         cd "$REPO_PATH"
+        
+        # Ensure uv is in PATH for the deployment
+        export PATH="$HOME/.cargo/bin:$PATH"
         
         echo "Deploying Databricks Bundle to ${{ inputs.target }}..."
         
