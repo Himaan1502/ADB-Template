@@ -1,5 +1,6 @@
-name: "Deploy Databricks Bundle"
-description: "Deploy a Databricks Asset Bundle to the target environment"
+name: "Validate and Deploy Databricks Bundle"
+description: "Validate and deploy a Databricks Asset Bundle to the target environment"
+
 inputs:
   target:
     description: "Deployment target (dev/uat/prod)"
@@ -8,48 +9,65 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Databricks CLI and dependencies
+    - name: Install Databricks CLI
       shell: bash
       run: |
         echo "Installing Databricks CLI..."
         curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-        pip install --upgrade pip wheel uv
         databricks --version
         
     - name: Load Environment Config
       shell: bash
       run: |
-        # Use the working repo path (default to current directory if not set)
         REPO_PATH=${WORKING_REPO_PATH:-"."}
+        ENV_FILE="$REPO_PATH/env/${{ inputs.target }}.txt"
         
         echo "Loading environment variables for ${{ inputs.target }}..."
-        if [ ! -f "$REPO_PATH/env/${{ inputs.target }}.txt" ]; then
-          echo "Environment file $REPO_PATH/env/${{ inputs.target }}.txt not found!"
+        
+        if [ ! -f "$ENV_FILE" ]; then
+          echo "❌ Environment file not found: $ENV_FILE"
           echo "Available files in $REPO_PATH/env/:"
-          ls -la "$REPO_PATH/env/" || echo "env directory not found"
+          ls -la "$REPO_PATH/env/" 2>/dev/null || echo "env directory not found"
           exit 1
         fi
         
-        # Load all variables from the env file
         while IFS='=' read -r key value || [ -n "$key" ]; do
-          # Skip empty lines and comments
           [[ $key =~ ^[[:space:]]*# ]] && continue
           [[ -z "$key" ]] && continue
           
-          # Remove any trailing whitespace and export to GitHub environment
           key=$(echo "$key" | xargs)
           value=$(echo "$value" | xargs)
           echo "${key}=${value}" >> $GITHUB_ENV
-        done < "$REPO_PATH/env/${{ inputs.target }}.txt"
+        done < "$ENV_FILE"
         
-        echo "Successfully loaded environment variables from $REPO_PATH/env/${{ inputs.target }}.txt"
+        echo "✅ Environment variables loaded successfully"
+        
+    - name: Validate Databricks Bundle
+      shell: bash
+      run: |
+        REPO_PATH=${WORKING_REPO_PATH:-"."}
+        cd "$REPO_PATH"
+        
+        echo "Validating Databricks Bundle for ${{ inputs.target }}..."
+        
+        if databricks bundle validate --target "${{ inputs.target }}"; then
+          echo "✅ Bundle validation successful"
+        else
+          echo "❌ Bundle validation failed"
+          exit 1
+        fi
         
     - name: Deploy Databricks Bundle
       shell: bash
       run: |
-        # Use the working repo path
         REPO_PATH=${WORKING_REPO_PATH:-"."}
+        cd "$REPO_PATH"
         
-        echo "Deploying Databricks Bundle to $TARGET..."
-        cd "$REPO_PATH"        
-        databricks bundle deploy --target "$TARGET"
+        echo "Deploying Databricks Bundle to ${{ inputs.target }}..."
+        
+        if databricks bundle deploy --target "${{ inputs.target }}"; then
+          echo "✅ Bundle deployed successfully"
+        else
+          echo "❌ Bundle deployment failed"
+          exit 1
+        fi
